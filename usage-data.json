@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-24T00:44:42",
+  "days": {
+    "2026-09-24": {
+      "total_seconds": 1130.4078419208527,
+      "applications": {
+        "kitty": {
+          "name": "Terminal",
+          "seconds": 262.59880352020264,
+          "category": "Üretkenlik"
+        },
+        "firefox": {
+          "name": "Firefox",
+          "seconds": 626.6521713733673,
+          "category": "Bilgi"
+        },
+        "com.usagetracker.widget": {
+          "name": "com.usagetracker.widget",
+          "seconds": 139.45207858085632,
+          "category": "Diğer"
+        },
+        "com.blacklayer.settings": {
+          "name": "com.blacklayer.settings",
+          "seconds": 67.10214400291443,
+          "category": "Diğer"
+        },
+        "xdg-desktop-portal-gtk": {
+          "name": "xdg-desktop-portal-gtk",
+          "seconds": 20.350154399871826,
+          "category": "Diğer"
+        },
+        "thunar": {
+          "name": "Thunar",
+          "seconds": 14.252490043640137,
+          "category": "Sistem"
+        }
+      },
+      "hourly": {
+        "00": 1130.4078419208527,
+        "01": 0,
+        "02": 0,
+        "03": 0,
+        "04": 0,
+        "05": 0,
+        "06": 0,
+        "07": 0,
+        "08": 0,
+        "09": 0,
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": 0,
+        "17": 0,
+        "18": 0,
+        "19": 0,
+        "20": 0,
+        "21": 0,
+        "22": 0,
+        "23": 0
+      }
+    }
+  }
+}

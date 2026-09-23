@@ -1,0 +1,14 @@
+[Unit]
+Description=Application Usage Tracker
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=__PYTHON__ __BASE_DIR__/usage-tracker.py
+WorkingDirectory=__BASE_DIR__
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
