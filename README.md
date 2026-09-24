@@ -318,6 +318,27 @@ usage-widget.py
 
 This project is completely standalone and does not depend on any other project.
 
+
+
+git clone https://github.com/furk4ngg/blacklayer.git
+cd blacklayer
+mkdir -p ~/.config/blacklayer
+cp blacklayer \
+   usage-data.json \
+   usage-tracker.py \
+   usage-tracker.service \
+   usage-widget.py \
+   LICENSE \
+   README.md \
+   ~/.config/blacklayer/
+
+
+chmod +x ~/.config/usage-tracker/usage-widget.py
+
+
+sudo pacman -S jq
+
+
 systemctl --user daemon-reload  
 systemctl --user enable --now usage-tracker.service  
 
