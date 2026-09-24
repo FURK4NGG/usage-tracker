@@ -313,3 +313,6 @@ usage-data.json
 usage-widget.py
 
 This project is completely standalone and does not depend on any other project.
+
+
+RUN:MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.load(sys.stdin)["monitor"])'); LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR="$MONITOR" python3 ~/.config/usage-tracker/usage-widget.py
