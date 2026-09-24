@@ -283,6 +283,10 @@ cd ~/.config/usage-tracker
 systemctl --user status usage-tracker.service --no-pager -l
 pgrep -af "usage-tracker.py"
 
+
+
+
+
 Then open another terminal:
 
 journalctl --user -u usage-tracker.service -f
@@ -314,5 +318,15 @@ usage-widget.py
 
 This project is completely standalone and does not depend on any other project.
 
+systemctl --user daemon-reload  
+systemctl --user enable --now usage-tracker.service  
+
+AUTOMATIC STARTER  
+systemctl --user enable usage-tracker.service
+Control:systemctl --user is-enabled usage-tracker.service
+>enabled
+
+Control:systemctl --user status usage-tracker.service  
+>active (running)  
 
 RUN:MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.load(sys.stdin)["monitor"])'); LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR="$MONITOR" python3 ~/.config/usage-tracker/usage-widget.py
