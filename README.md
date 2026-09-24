@@ -319,19 +319,19 @@ usage-widget.py
 This project is completely standalone and does not depend on any other project.
 
 
-
-git clone https://github.com/furk4ngg/blacklayer.git
-cd blacklayer
-mkdir -p ~/.config/blacklayer
-cp blacklayer \
-   usage-data.json \
+```
+git clone https://github.com/FURK4NGG/usage-tracker.git
+cd usage-tracker
+mkdir -p ~/.config/usage-tracker
+cp usage-data.json \
    usage-tracker.py \
    usage-tracker.service \
    usage-widget.py \
+   install.sh \
    LICENSE \
    README.md \
-   ~/.config/blacklayer/
-
+   ~/.config/usage-tracker/
+```
 
 chmod +x ~/.config/usage-tracker/usage-widget.py
 
