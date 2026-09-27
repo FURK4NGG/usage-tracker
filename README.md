@@ -19,6 +19,7 @@ Directory Structure
 ├── usage-tracker.service  
 ├── usage-widget.lock (This file is auto-generated)  
 ├── usage-widget-language.json (This file is auto-generated)  
+├── usage-limits.json (This file is auto-generated)  
 └── usage-data.json (This file is auto-generated)  
 <br>
 
