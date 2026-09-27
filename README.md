@@ -23,8 +23,6 @@ Directory Structure
 
 ## 🚀 Features
 
-usage-tracker.py
-
 - [x] Measures active application usage time  
 - [x] Categorizes applications automatically  
 - [x] Generates hourly usage breakdowns  
@@ -37,16 +35,16 @@ usage-tracker.py
 - [x] Instant English / Turkish language switching  
 - [ ] App sinirlandirma   
 
-Hyprland
-   │
-   ▼
-usage-tracker.py
-   │
-   ▼
-usage-data.json
-   │
-   ▼
-usage-widget.py
+Hyprland  
+   │  
+   ▼  
+usage-tracker.py  
+   │  
+   ▼  
+usage-data.json  
+   │  
+   ▼  
+usage-widget.py  
 
 
 
