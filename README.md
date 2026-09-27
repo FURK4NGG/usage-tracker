@@ -335,6 +335,9 @@ cp usage-data.json \
 ```
 
 chmod +x ~/.config/usage-tracker/usage-widget.py
+chmod +x ~/.config/usage-tracker/usage-tracker.py
+chmod +x ~/.config/usage-tracker/usage-tracker.service
+chmod +x ~/.config/usage-tracker/install.sh
 
 
 sudo pacman -S jq
