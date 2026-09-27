@@ -3,6 +3,7 @@ import json
 import os
 import re
 import select
+import shutil
 import socket
 import subprocess
 import time
@@ -169,7 +170,34 @@ def category(app):
     return CATEGORY_MAP.get(app, "Diğer")
 
 
-def active_window():
+def detect_compositor():
+    """
+    Work out which wlroots-based compositor we're running under, so we can
+    pick the right way to ask "what window is focused right now?".
+
+    - Hyprland has its own hyprctl CLI and an event socket (fastest, and
+      lets us react to focus changes instantly instead of polling).
+    - Sway (and other swaymsg-IPC-compatible compositors) expose focus
+      state through `swaymsg -t get_tree`.
+    - Everything else that implements ext-foreign-toplevel-list-v1 or
+      wlr-foreign-toplevel-management-unstable-v1 (River, Wayfire, Hikari,
+      Labwc, and in fact Sway/Hyprland too) can be queried generically via
+      the small `lswt` utility, which speaks those protocols directly
+      instead of any compositor-specific IPC.
+    """
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") and shutil.which("hyprctl"):
+        return "hyprland"
+    if os.environ.get("SWAYSOCK") and shutil.which("swaymsg"):
+        return "sway"
+    if shutil.which("lswt"):
+        return "wlr-generic"
+    return None
+
+
+COMPOSITOR = detect_compositor()
+
+
+def _active_app_id_hyprland():
     try:
         p = subprocess.run(
             ["hyprctl", "-j", "activewindow"],
@@ -179,18 +207,110 @@ def active_window():
         )
         if p.returncode != 0:
             return None
-        return json.loads(p.stdout)
+        window = json.loads(p.stdout)
     except Exception:
         return None
-
-
-def application_from_window(window):
     if not isinstance(window, dict):
         return None
     app = window.get("class") or window.get("initialClass")
     if not app:
         return None
     return str(app).strip().lower() or None
+
+
+def _find_focused_sway_app_id(node):
+    if not isinstance(node, dict):
+        return None
+    if node.get("focused"):
+        app_id = node.get("app_id")
+        if app_id:
+            return str(app_id).strip().lower()
+        # XWayland apps under Sway don't have an app_id, only a window class.
+        props = node.get("window_properties") or {}
+        cls = props.get("class") or props.get("instance")
+        if cls:
+            return str(cls).strip().lower()
+        return None
+    for child in (node.get("nodes") or []) + (node.get("floating_nodes") or []):
+        found = _find_focused_sway_app_id(child)
+        if found:
+            return found
+    return None
+
+
+def _active_app_id_sway():
+    try:
+        p = subprocess.run(
+            ["swaymsg", "-t", "get_tree"],
+            capture_output=True,
+            text=True,
+            timeout=1.5
+        )
+        if p.returncode != 0:
+            return None
+        tree = json.loads(p.stdout)
+    except Exception:
+        return None
+    return _find_focused_sway_app_id(tree)
+
+
+def _active_app_id_wlr_generic():
+    # lswt talks ext-foreign-toplevel-list-v1 / wlr-foreign-toplevel-management-
+    # unstable-v1 directly, so this works on any wlroots compositor
+    # (River, Wayfire, Hikari, Labwc, ...) without needing a compositor-
+    # specific IPC command.
+    try:
+        p = subprocess.run(
+            ["lswt", "-j"],
+            capture_output=True,
+            text=True,
+            timeout=1.5
+        )
+        if p.returncode != 0:
+            return None
+        payload = json.loads(p.stdout)
+    except Exception:
+        return None
+
+    if isinstance(payload, dict):
+        toplevels = payload.get("toplevels") or payload.get("data") or []
+    elif isinstance(payload, list):
+        toplevels = payload
+    else:
+        toplevels = []
+
+    for item in toplevels:
+        if not isinstance(item, dict):
+            continue
+        state = item.get("state")
+        if isinstance(state, dict):
+            activated = bool(state.get("activated"))
+        else:
+            activated = bool(item.get("activated"))
+        if not activated:
+            continue
+        app_id = item.get("app-id") or item.get("app_id")
+        if app_id:
+            return str(app_id).strip().lower()
+    return None
+
+
+def active_app_id():
+    """Return the lowercased app-id/class of the currently focused window,
+    using whichever method fits the detected compositor, with lswt as a
+    generic fallback if the preferred method comes up empty."""
+    app = None
+    if COMPOSITOR == "hyprland":
+        app = _active_app_id_hyprland()
+    elif COMPOSITOR == "sway":
+        app = _active_app_id_sway()
+    elif COMPOSITOR == "wlr-generic":
+        app = _active_app_id_wlr_generic()
+
+    if not app and COMPOSITOR != "wlr-generic" and shutil.which("lswt"):
+        app = _active_app_id_wlr_generic()
+
+    return app
 
 
 def session_locked():
@@ -235,19 +355,21 @@ def open_event_socket():
 
 def main():
     print(f"[usage-tracker] Starting")
+    print(f"[usage-tracker] Compositor: {COMPOSITOR or 'unknown (no supported tool found)'}")
     print(f"[usage-tracker] Data: {DATA_FILE}", flush=True)
 
     data = load_data()
-    event_sock = open_event_socket()
+    event_sock = open_event_socket() if COMPOSITOR == "hyprland" else None
 
-    current_app = application_from_window(active_window())
+    current_app = active_app_id()
     last_time = time.time()
     last_save = 0.0
 
     while True:
         now = time.time()
 
-        # Prefer event-driven active-window updates, with polling as fallback.
+        # Prefer event-driven active-window updates on Hyprland, with
+        # polling as fallback everywhere else (and if the socket drops).
         if event_sock:
             try:
                 readable, _, _ = select.select([event_sock], [], [], 0)
@@ -270,7 +392,7 @@ def main():
                 event_sock = None
 
         if not event_sock:
-            polled = application_from_window(active_window())
+            polled = active_app_id()
             if polled:
                 current_app = polled
 
