@@ -3,6 +3,10 @@
 A simple application usage tracker for Hyprland that monitors active application usage and displays daily usage statistics through a GTK4-based widget.  
 <br><br>
 
+[![usage-tracker Demo Video](https://github.com/FURK4NGG/usage-tracker/blob/main/%7B%7D/usage-tracker.gif)
+
+<br><br>
+
 ✅ Works On  
 wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc)  
 
