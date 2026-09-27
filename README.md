@@ -11,18 +11,6 @@ GNOME (Wayland), KDE Plasma (Wayland) — neither exposes the toplevel-list
 protocol this tool relies on to see which window is focused
 <br><br>
 
-Directory Structure  
-~/.config/usage-tracker/  
-├── install.sh  
-├── usage-tracker.py  
-├── usage-widget.py  
-├── usage-tracker.service  
-├── usage-widget.lock (This file is auto-generated)  
-├── usage-widget-language.json (This file is auto-generated)  
-├── usage-limits.json (This file is auto-generated)  
-└── usage-data.json (This file is auto-generated)  
-<br>
-
 ## 🚀 Features
 
 - [x] Measures active application usage time  
@@ -37,6 +25,17 @@ Directory Structure
 - [x] Instant English / Turkish language switching  
 - [x] Automatically tracks your app usage and notifies you instantly when you reach the time limits you set  
 
+<br>
+Directory Structure  
+~/.config/usage-tracker/  
+├── install.sh  
+├── usage-tracker.py  
+├── usage-widget.py  
+├── usage-tracker.service  
+├── usage-widget.lock (This file is auto-generated)  
+├── usage-widget-language.json (This file is auto-generated)  
+├── usage-limits.json (This file is auto-generated)  
+└── usage-data.json (This file is auto-generated)  
 <br>
 
 ## 📦 Setup
