@@ -129,7 +129,7 @@ or
 
 Launch the widget on a specific monitor by connector name:
 ```
-USAGE_TRACKER_MONITOR=DP-1 python3 ~/.config/usage-tracker/usage-widget.py
+LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR=DP-1 python3 ~/.config/usage-tracker/usage-widget.py
 ```
 The code should run on whichever screen the terminal is currently running on:
 ```
