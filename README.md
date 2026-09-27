@@ -39,18 +39,6 @@ Directory Structure
 
 <br>
 
-Hyprland  
-   │  
-   ▼  
-usage-tracker.py  
-   │  
-   ▼  
-usage-data.json  
-   │  
-   ▼  
-usage-widget.py  
-<br>
-
 ## 📦 Setup
 
 ```
@@ -137,6 +125,50 @@ The code should run on whichever screen the terminal is currently running on:
 ```
 MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.load(sys.stdin)["monitor"])'); LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR="$MONITOR" python3 ~/.config/usage-tracker/usage-widget.py
 ```
+
+
+## ❓ HOW IT WORKS ❓
+
+Hyprland  
+   │  
+   ▼  
+usage-tracker.py  
+   │  
+   ▼  
+usage-data.json  
+   │  
+   ▼  
+usage-widget.py  
+<br>
+
+## [usage-tracker.py]  
+- Tracks application usage and records daily usage statistics  
+- Uygulama kullanımını takip eder ve günlük kullanım istatistiklerini kaydeder
+
+## [usage-widget.py]  
+- Displays application usage statistics, graphs, daily history, and usage limits  
+- Uygulama kullanım istatistiklerini, grafikleri, günlük geçmişi ve kullanım limitlerini gösterir
+
+## [usage-data.json]  
+- Stores recorded application usage data and daily statistics  
+- Kaydedilen uygulama kullanım verilerini ve günlük istatistikleri tutar
+
+## [usage-limits.json]  
+- Stores per-application usage time limits  
+- Uygulama bazında belirlenen kullanım süresi limitlerini tutar
+
+## [usage-widget-language.json]  
+- Stores the selected widget interface language  
+- Widget arayüzünde seçilen dili tutar  
+
+## [usage-tracker.service]  
+- Runs the application usage tracker automatically as a user systemd service  
+- Uygulama kullanım takipçisini kullanıcı systemd servisi olarak otomatik çalıştırır
+
+## [install.sh]  
+- Installs and configures the application usage tracker  
+- Uygulama kullanım takipçisini kurar ve yapılandırır  
+<br>
 
 # Fast Installation  
 
