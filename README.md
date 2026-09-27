@@ -64,25 +64,30 @@ cp usage-data.json \
    ~/.config/usage-tracker/
 ```
 
-chmod +x ~/.config/usage-tracker/usage-widget.py
-chmod +x ~/.config/usage-tracker/usage-tracker.py
-chmod +x ~/.config/usage-tracker/usage-tracker.service
-chmod +x ~/.config/usage-tracker/install.sh
+chmod +x ~/.config/usage-tracker/usage-widget.py  
+chmod +x ~/.config/usage-tracker/usage-tracker.py  
+chmod +x ~/.config/usage-tracker/usage-tracker.service  
+chmod +x ~/.config/usage-tracker/install.sh  
 
 Arch
 ```
-sudo pacman -S python-gobject gtk4 gtk4-layer-shell
+sudo pacman -S python-gobject gtk4 gtk4-layer-shell jq
+```
+Debian / Ubuntu
+```
+sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-gtk4layershell-1.0 jq
+```
+Fedora
+```
+sudo dnf install python3-gobject gtk4 gtk4-layer-shell jq
 ```
 
-
-
-sudo pacman -S jq
 
 Enable and start the service  
 systemctl --user daemon-reload  
 systemctl --user enable --now usage-tracker.service  
 
-AUTOMATIC STARTER  
+▶️ AUTOMATIC STARTER  
 systemctl --user enable usage-tracker.service
 Control:systemctl --user is-enabled usage-tracker.service
 >enabled
