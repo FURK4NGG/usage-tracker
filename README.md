@@ -1,14 +1,14 @@
 ## 👀 usage-tracker Overview  
 
 A simple application usage tracker for Hyprland that monitors active application usage and displays daily usage statistics through a GTK4-based widget.  
-
+<br>
 ✅ Works On  
 wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc)  
 
 ❌ Not Supported  
 GNOME (Wayland), KDE Plasma (Wayland) — neither exposes the toplevel-list
 protocol this tool relies on to see which window is focused
-
+<br><br>
 
 Directory Structure  
 ~/.config/usage-tracker/  
@@ -19,7 +19,7 @@ Directory Structure
 ├── usage-widget.lock (This file is auto-generated)  
 ├── usage-widget-language.json (This file is auto-generated)  
 └── usage-data.json (This file is auto-generated)  
-
+<br>
 
 ## 🚀 Features
 
@@ -35,6 +35,8 @@ Directory Structure
 - [x] Instant English / Turkish language switching  
 - [ ] App sinirlandirma   
 
+<br>
+
 Hyprland  
    │  
    ▼  
@@ -45,8 +47,7 @@ usage-data.json
    │  
    ▼  
 usage-widget.py  
-
-
+<br>
 
 ## 📦 Setup
 
@@ -81,7 +82,7 @@ Fedora
 ```
 sudo dnf install python3-gobject gtk4 gtk4-layer-shell jq
 ```
-
+<br><br>
 
 Enable and start the service  
 ```
@@ -137,8 +138,8 @@ MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.l
 
 # Fast Installation  
 
-sudo pacman -Syu git
-git clone https://github.com/FURK4NGG/usage-tracker.git
-cd usage-tracker
-chmod +x install.sh
-./install.sh
+sudo pacman -Syu git  
+git clone https://github.com/FURK4NGG/usage-tracker.git  
+cd usage-tracker  
+chmod +x install.sh  
+./install.sh  
