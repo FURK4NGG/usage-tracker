@@ -3,6 +3,14 @@
 
 A simple application usage tracker for Hyprland that monitors active application usage and displays daily usage statistics through a GTK4-based widget.  
 
+✅ Works On  
+wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc)  
+
+❌ Not Supported  
+GNOME (Wayland), KDE Plasma (Wayland) — neither exposes the toplevel-list
+protocol this tool relies on to see which window is focused
+
+
 Directory Structure  
 ~/.config/usage-tracker/  
 ├── install.sh  
