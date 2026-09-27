@@ -26,6 +26,7 @@ protocol this tool relies on to see which window is focused
 - [x] Automatically tracks your app usage and notifies you instantly when you reach the time limits you set  
 
 <br>
+
 Directory Structure  
 ~/.config/usage-tracker/  
 ├── install.sh  
