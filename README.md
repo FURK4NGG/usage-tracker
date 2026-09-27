@@ -121,6 +121,8 @@ hyprctl monitors
 ```
 >Monitor DP-2 (ID 0) Monitor HDMI-A-2 (ID 1)
 
+<br><br>
+
 ## 🎉 Run
 Launch the widget on a specific monitor by connector name:
 ```
