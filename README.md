@@ -27,6 +27,8 @@ protocol this tool relies on to see which window is focused
 
 <br>
 
+## 📦 Setup
+
 Directory Structure  
 ~/.config/usage-tracker/  
 ├── install.sh  
@@ -39,7 +41,6 @@ Directory Structure
 └── usage-data.json (This file is auto-generated)  
 <br>
 
-## 📦 Setup
 
 ```
 git clone https://github.com/FURK4NGG/usage-tracker.git
