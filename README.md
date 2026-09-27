@@ -1,34 +1,33 @@
 # usage-tracker
 
-Usage Tracker
 
-A simple application usage tracker for Hyprland that monitors active application usage and displays daily usage statistics through a GTK4-based widget.
+A simple application usage tracker for Hyprland that monitors active application usage and displays daily usage statistics through a GTK4-based widget.  
 
-Directory Structure
-~/.config/usage-tracker/
-├── install.sh
-├── usage-tracker.py
-├── usage-widget.py
-├── usage-tracker.service
+Directory Structure  
+~/.config/usage-tracker/  
+├── install.sh  
+├── usage-tracker.py  
+├── usage-widget.py  
+├── usage-tracker.service  
 └── usage-data.json (This file is auto-generated)  
 
 
-usage-tracker.py
-Monitors active window changes in Hyprland
-Measures active application usage time
-Categorizes applications
-Creates hourly usage data
-Records daily usage data
-Stores data in usage-data.json
-Can run in the background as a systemd user service
-usage-widget.py
-Displays daily data from usage-data.json
-Uses GTK4 and GTK4 Layer Shell
-Displays total daily usage time
-Displays hourly usage as a simple square/bar graph
-Displays total usage time by category
-Lists the most used applications
-usage-tracker.service
+usage-tracker.py  
+Monitors active window changes in Hyprland  
+Measures active application usage time  
+Categorizes applications  
+Creates hourly usage data  
+Records daily usage data  
+Stores data in usage-data.json  
+Can run in the background as a systemd user service  
+usage-widget.py  
+Displays daily data from usage-data.json  
+Uses GTK4 and GTK4 Layer Shell  
+Displays total daily usage time  
+Displays hourly usage as a simple square/bar graph  
+Displays total usage time by category  
+Lists the most used applications  
+usage-tracker.service  
 
 Runs the tracker in the background within the user's session.
 
