@@ -35,7 +35,7 @@ Directory Structure
 - [x] Shows total daily usage time  
 - [x] Simple bar-graph view of hourly usage  
 - [x] Instant English / Turkish language switching  
-- [ ] App sinirlandirma   
+- [x] Automatically tracks your app usage and notifies you instantly when you reach the time limits you set  
 
 <br>
 
