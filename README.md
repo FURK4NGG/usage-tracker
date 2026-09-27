@@ -1,5 +1,4 @@
-# usage-tracker
-
+## 👀 usage-tracker Overview  
 
 A simple application usage tracker for Hyprland that monitors active application usage and displays daily usage statistics through a GTK4-based widget.  
 
@@ -17,7 +16,10 @@ Directory Structure
 ├── usage-tracker.py  
 ├── usage-widget.py  
 ├── usage-tracker.service  
+├── usage-widget.lock (This file is auto-generated)  
+├── usage-widget-language.json (This file is auto-generated)  
 └── usage-data.json (This file is auto-generated)  
+
 
 
 usage-tracker.py  
