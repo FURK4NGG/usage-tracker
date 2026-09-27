@@ -10,7 +10,9 @@ Directory Structure
 ├── usage-tracker.py
 ├── usage-widget.py
 ├── usage-tracker.service
-└── usage-data.json
+└── usage-data.json (This file is auto-generated)  
+
+
 usage-tracker.py
 Monitors active window changes in Hyprland
 Measures active application usage time
