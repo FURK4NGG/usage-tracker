@@ -11,9 +11,20 @@ from datetime import datetime
 
 BASE_DIR = os.path.expanduser("~/.config/usage-tracker")
 DATA_FILE = os.path.join(BASE_DIR, "usage-data.json")
+LANGUAGE_FILE = os.path.join(BASE_DIR, "usage-widget-language.json")
+LIMITS_FILE = os.path.join(BASE_DIR, "usage-limits.json")
 POLL_INTERVAL = 1.0
 MAX_DAYS = 30
 MAX_SEGMENT = 5.0
+
+NOTIFY_TITLE = {
+    "en": "Usage Tracker",
+    "tr": "Kullanım Takipçisi",
+}
+NOTIFY_TEXT = {
+    "en": "{app} usage limit reached",
+    "tr": "{app} kullanım limiti doldu",
+}
 
 CATEGORY_MAP = {
     "firefox": "Bilgi",
@@ -168,6 +179,168 @@ def display_name(app):
 
 def category(app):
     return CATEGORY_MAP.get(app, "Diğer")
+
+
+def current_language():
+    try:
+        with open(LANGUAGE_FILE, "r", encoding="utf-8") as f:
+            value = json.load(f).get("language", "en")
+            if value in ("en", "tr"):
+                return value
+    except Exception:
+        pass
+    return "en"
+
+
+def load_limits():
+    """Read the current limits from usage-limits.json."""
+    try:
+        with open(LIMITS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+    return {}
+
+
+_limits_cache = {}
+_limits_mtime_ns = None
+
+
+def get_limits():
+    """Return current limits and automatically reload a changed file.
+
+    The widget writes usage-limits.json while this process is running.
+    Comparing mtime_ns makes the tracker pick up those changes without
+    restarting the systemd service.
+    """
+    global _limits_cache, _limits_mtime_ns
+
+    try:
+        mtime_ns = os.stat(LIMITS_FILE).st_mtime_ns
+    except OSError:
+        mtime_ns = None
+
+    if mtime_ns != _limits_mtime_ns:
+        new_limits = load_limits()
+
+        # Only replace the cache after a successful JSON read. This prevents
+        # a transient/partial file write from erasing the active limits.
+        if mtime_ns is None:
+            _limits_cache = {}
+        else:
+            _limits_cache = new_limits
+
+        _limits_mtime_ns = mtime_ns
+        print(
+            f"[usage-tracker] Limits reloaded automatically: "
+            f"{len(_limits_cache)} configured",
+            flush=True,
+        )
+
+    return _limits_cache
+
+
+def notify_limit_reached(app):
+    lang = current_language()
+    message = NOTIFY_TEXT.get(lang, NOTIFY_TEXT["en"]).format(
+        app=display_name(app)
+    )
+    title = NOTIFY_TITLE.get(lang, NOTIFY_TITLE["en"])
+
+    notify_send = shutil.which("notify-send")
+    if not notify_send:
+        print(
+            "[usage-tracker] notify-send not found; "
+            f"cannot notify for {display_name(app)}",
+            flush=True,
+        )
+        return False
+
+    try:
+        result = subprocess.run(
+            [
+                notify_send,
+                "--app-name=Usage Tracker",
+                "--urgency=critical",
+                "--expire-time=0",
+                title,
+                message,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            env=os.environ.copy(),
+        )
+    except Exception as exc:
+        print(
+            f"[usage-tracker] notification failed for {display_name(app)}: {exc}",
+            flush=True,
+        )
+        return False
+
+    if result.returncode != 0:
+        error = (result.stderr or result.stdout or "").strip()
+        print(
+            f"[usage-tracker] notify-send failed for {display_name(app)}"
+            + (f": {error}" if error else ""),
+            flush=True,
+        )
+        return False
+
+    print(
+        f"[usage-tracker] LIMIT REACHED: {display_name(app)}",
+        flush=True,
+    )
+    return True
+
+
+def check_limit(data, app):
+    """Check an app against the current limit without requiring a restart.
+
+    If a limit is changed while the tracker is running, the new value is
+    immediately used. A changed limit starts a fresh notification state for
+    that app. Thus lowering a limit below today's already-recorded usage will
+    notify immediately on the next polling cycle.
+    """
+    limit_seconds = get_limits().get(app, {}).get("limit_seconds")
+    if limit_seconds is None:
+        return False
+
+    try:
+        limit_seconds = int(limit_seconds)
+    except (TypeError, ValueError):
+        return False
+
+    if limit_seconds <= 0:
+        return False
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    day = data["days"].get(today)
+    if not day:
+        return False
+
+    item = day["applications"].get(app)
+    if not item:
+        return False
+
+    # Keep the limit that was last applied to this day's app record.
+    # This lets a changed limit reset notification state without restarting.
+    previous_limit = item.get("_limit_seconds")
+    if previous_limit != limit_seconds:
+        item["_limit_seconds"] = limit_seconds
+        item["notified"] = False
+
+    if item.get("notified"):
+        return False
+
+    if float(item.get("seconds", 0) or 0) >= limit_seconds:
+        if notify_limit_reached(app):
+            item["notified"] = True
+            return True
+
+    return False
 
 
 def detect_compositor():
@@ -400,6 +573,9 @@ def main():
 
         if current_app and not session_locked():
             record_usage(data, current_app, now - elapsed, elapsed)
+            if check_limit(data, current_app):
+                save_data(data)
+                last_save = now
 
         last_time = now
 

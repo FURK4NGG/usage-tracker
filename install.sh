@@ -71,6 +71,12 @@ fi
 
 rm -f /tmp/usage-tracker-gtk-check.log /tmp/usage-tracker-layershell-check.log
 
+if ! command -v notify-send >/dev/null 2>&1; then
+    warn "'notify-send' bulunamadı. Uygulama kullanım limiti bildirimleri gösterilemeyecek."
+    warn "Arch: sudo pacman -S libnotify | Debian/Ubuntu: sudo apt install libnotify-bin | Fedora: sudo dnf install libnotify"
+    warn "Ayrıca bir bildirim sunucusu (mako, dunst, swaync vb.) çalışıyor olmalı."
+fi
+
 # ---------------------------------------------------------------------------
 # Compositor support check (informational, non-fatal).
 # ---------------------------------------------------------------------------

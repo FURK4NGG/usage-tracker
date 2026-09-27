@@ -35,6 +35,7 @@ BASE_DIR = os.path.expanduser("~/.config/usage-tracker")
 DATA_FILE = os.path.join(BASE_DIR, "usage-data.json")
 LOCK_FILE = os.path.join(BASE_DIR, "usage-widget.lock")
 LANGUAGE_FILE = os.path.join(BASE_DIR, "usage-widget-language.json")
+LIMITS_FILE = os.path.join(BASE_DIR, "usage-limits.json")
 _lock_handle = None
 
 DEFAULT_LANGUAGE = "en"
@@ -63,6 +64,15 @@ TRANSLATIONS = {
         "communication": "Communication",
         "gaming": "Gaming",
         "system": "System",
+        "set_limit_for": "Set a usage limit for",
+        "hours_short": "h",
+        "minutes_short": "m",
+        "seconds_short": "s",
+        "limit_label": "Limit",
+        "clear_limit": "Clear limit",
+        "cancel": "Cancel",
+        "save": "Save",
+        "limit_reached": "usage limit reached",
     },
     "tr": {
         "title": "Uygulama Kullanımı",
@@ -86,6 +96,15 @@ TRANSLATIONS = {
         "communication": "İletişim",
         "gaming": "Oyun",
         "system": "Sistem",
+        "set_limit_for": "Kullanım limiti belirle:",
+        "hours_short": "sa",
+        "minutes_short": "dk",
+        "seconds_short": "sn",
+        "limit_label": "Limit",
+        "clear_limit": "Limiti kaldır",
+        "cancel": "Vazgeç",
+        "save": "Kaydet",
+        "limit_reached": "kullanım limiti doldu",
     },
 }
 
@@ -120,6 +139,28 @@ def save_language(language):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump({"language": language}, f, ensure_ascii=False, indent=2)
     os.replace(tmp, LANGUAGE_FILE)
+
+
+def load_limits():
+    """{app_id: {"limit_seconds": int}} -- read by both the widget (to show
+    the current limit) and usage-tracker.py (to know when to notify)."""
+    try:
+        with open(LIMITS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+    return {}
+
+
+def save_limits(limits):
+    os.makedirs(BASE_DIR, exist_ok=True)
+    tmp = LIMITS_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(limits, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, LIMITS_FILE)
+
 
 def acquire_single_instance():
     global _lock_handle
@@ -303,6 +344,7 @@ class UsageWindow(Gtk.Window):
             Gtk4LayerShell.set_margin(self, edge, 0)
 
         self.selected_date = date.today()
+        self._limit_target = None
         self.language = load_language()
 
         self.bind_monitor()
@@ -310,11 +352,14 @@ class UsageWindow(Gtk.Window):
         self.build()
         self.refresh()
 
-        GLib.timeout_add_seconds(5, self.refresh)
+        GLib.timeout_add_seconds(5, self.periodic_refresh)
 
     def on_key_pressed(self, controller, keyval, keycode, state):
         if keyval == Gdk.KEY_Escape:
-            self.get_application().quit()
+            if self._limit_target:
+                self._cancel_limit()
+            else:
+                self.get_application().quit()
             return True
         return False
 
@@ -458,6 +503,15 @@ class UsageWindow(Gtk.Window):
         }
         .label { color: white; font-size: 14px; font-weight: 700; }
         .value { color: rgba(255,255,255,0.72); font-size: 13px; }
+        .limit-value { color: rgba(255,180,90,0.85); font-size: 12px; font-weight: 600; }
+        .app-button {
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            padding: 6px 8px;
+        }
+        .app-button:hover { background: rgba(255,255,255,0.06); }
+        .limit-title { color: white; font-size: 15px; font-weight: 700; }
         """
         provider = Gtk.CssProvider()
         provider.load_from_data(css.encode())
@@ -587,12 +641,102 @@ class UsageWindow(Gtk.Window):
             self.card.remove(child)
             child = nxt
 
+    def open_limit_dialog(self, app_id, display_name):
+        # Rendered inline inside the same card on the next refresh, rather
+        # than as a separate window or popover: this window's layer-shell
+        # surface holds exclusive keyboard focus, which stops any other
+        # window (and popovers) from receiving clicks at all. Only content
+        # inside this one surface is reliably clickable.
+        self._limit_target = (app_id, display_name)
+        self.refresh()
+
+    def render_limit_panel(self, app_id, display_name):
+        tr = TRANSLATIONS[self.language]
+        current = load_limits().get(app_id, {}).get("limit_seconds", 0) or 0
+        cur_h, rem = divmod(int(current), 3600)
+        cur_m, cur_s = divmod(rem, 60)
+
+        title = self.add_label(f'{tr["set_limit_for"]} {display_name}', "limit-title")
+        title.set_halign(Gtk.Align.CENTER)
+        title.set_xalign(0.5)
+
+        spin_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        spin_row.set_halign(Gtk.Align.CENTER)
+        spin_row.set_margin_top(18)
+        spin_row.set_margin_bottom(18)
+
+        self.limit_h_spin = Gtk.SpinButton.new_with_range(0, 23, 1)
+        self.limit_h_spin.set_value(cur_h)
+        self.limit_m_spin = Gtk.SpinButton.new_with_range(0, 59, 1)
+        self.limit_m_spin.set_value(cur_m)
+        self.limit_s_spin = Gtk.SpinButton.new_with_range(0, 59, 1)
+        self.limit_s_spin.set_value(cur_s)
+
+        for spin, unit in (
+            (self.limit_h_spin, tr["hours_short"]),
+            (self.limit_m_spin, tr["minutes_short"]),
+            (self.limit_s_spin, tr["seconds_short"]),
+        ):
+            col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            col.set_halign(Gtk.Align.CENTER)
+            col.append(spin)
+            unit_label = Gtk.Label(label=unit)
+            unit_label.add_css_class("muted")
+            col.append(unit_label)
+            spin_row.append(col)
+
+        self.card.append(spin_row)
+
+        btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        btn_row.set_halign(Gtk.Align.CENTER)
+
+        clear_btn = Gtk.Button(label=tr["clear_limit"])
+        clear_btn.connect("clicked", lambda *_: self._finish_limit(app_id, None))
+        btn_row.append(clear_btn)
+
+        cancel_btn = Gtk.Button(label=tr["cancel"])
+        cancel_btn.connect("clicked", lambda *_: self._cancel_limit())
+        btn_row.append(cancel_btn)
+
+        save_btn = Gtk.Button(label=tr["save"])
+        save_btn.add_css_class("suggested-action")
+        save_btn.connect("clicked", lambda *_: self._finish_limit(
+            app_id,
+            int(self.limit_h_spin.get_value()) * 3600
+            + int(self.limit_m_spin.get_value()) * 60
+            + int(self.limit_s_spin.get_value())
+        ))
+        btn_row.append(save_btn)
+
+        self.card.append(btn_row)
+
+    def _finish_limit(self, app_id, seconds):
+        limits = load_limits()
+        if seconds:
+            limits[app_id] = {"limit_seconds": seconds}
+        else:
+            limits.pop(app_id, None)
+        save_limits(limits)
+        self._limit_target = None
+        self.refresh()
+
+    def _cancel_limit(self):
+        self._limit_target = None
+        self.refresh()
+
     def add_label(self, text, css, xalign=0.0):
         label = Gtk.Label(label=text)
         label.add_css_class(css)
         label.set_xalign(xalign)
         self.card.append(label)
         return label
+
+    def periodic_refresh(self):
+        # Skip the automatic 5s rebuild while the limit panel is open, so it
+        # doesn't wipe out spin-button values the user hasn't saved yet.
+        if self._limit_target:
+            return True
+        return self.refresh()
 
     def refresh(self):
         data = load_data()
@@ -608,6 +752,12 @@ class UsageWindow(Gtk.Window):
         self.card.append(self.header)
 
         self.update_language_menu()
+
+        if getattr(self, "_limit_target", None):
+            app_id, display_name = self._limit_target
+            self.render_limit_panel(app_id, display_name)
+            return True
+
         self.add_label(TRANSLATIONS[self.language]["title"], "title")
 
         summary = Gtk.Box(
@@ -665,13 +815,15 @@ class UsageWindow(Gtk.Window):
         grid.set_column_spacing(55)
         grid.set_row_spacing(12)
 
+        limits = load_limits()
+
         ordered = sorted(
-            apps.values(),
-            key=lambda x: float(x.get("seconds", 0)),
+            apps.items(),
+            key=lambda kv: float(kv[1].get("seconds", 0)),
             reverse=True
         )[:9]
 
-        for i, item in enumerate(ordered):
+        for i, (app_id, item) in enumerate(ordered):
             col = i % 3
             row = i // 3
 
@@ -680,7 +832,9 @@ class UsageWindow(Gtk.Window):
                 spacing=2
             )
 
-            name = Gtk.Label(label=str(item.get("name", TRANSLATIONS[self.language]["unknown"])))
+            display = str(item.get("name", TRANSLATIONS[self.language]["unknown"]))
+
+            name = Gtk.Label(label=display)
             name.add_css_class("label")
             name.set_xalign(0)
 
@@ -692,7 +846,26 @@ class UsageWindow(Gtk.Window):
 
             box.append(name)
             box.append(value)
-            grid.attach(box, col, row, 1, 1)
+
+            limit_seconds = limits.get(app_id, {}).get("limit_seconds")
+            if limit_seconds:
+                limit_label = Gtk.Label(
+                    label=f'{TRANSLATIONS[self.language]["limit_label"]}: {duration(limit_seconds, self.language)}'
+                )
+                limit_label.add_css_class("limit-value")
+                limit_label.set_xalign(0)
+                box.append(limit_label)
+
+            button = Gtk.Button()
+            button.set_has_frame(False)
+            button.add_css_class("app-button")
+            button.set_child(box)
+            button.connect(
+                "clicked",
+                lambda _b, aid=app_id, nm=display: self.open_limit_dialog(aid, nm)
+            )
+
+            grid.attach(button, col, row, 1, 1)
 
         if ordered:
             self.card.append(grid)
