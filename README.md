@@ -132,7 +132,8 @@ Launch the widget on a specific monitor by connector name:
 USAGE_TRACKER_MONITOR=DP-1 python3 ~/.config/usage-tracker/usage-widget.py
 ```
 The code should run on whichever screen the terminal is currently running on:
-```MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.load(sys.stdin)["monitor"])'); LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR="$MONITOR" python3 ~/.config/usage-tracker/usage-widget.py
+```
+MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.load(sys.stdin)["monitor"])'); LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR="$MONITOR" python3 ~/.config/usage-tracker/usage-widget.py
 ```
 
 # Fast Installation  
