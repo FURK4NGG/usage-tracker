@@ -84,11 +84,15 @@ sudo dnf install python3-gobject gtk4 gtk4-layer-shell jq
 
 
 Enable and start the service  
+```
 systemctl --user daemon-reload  
 systemctl --user enable --now usage-tracker.service  
+```
 
 ▶️ AUTOMATIC STARTER  
+```
 systemctl --user enable usage-tracker.service
+```
 Control:systemctl --user is-enabled usage-tracker.service
 >enabled
 
@@ -122,11 +126,6 @@ hyprctl monitors
 >Monitor DP-2 (ID 0) Monitor HDMI-A-2 (ID 1)
 
 ## 🎉 Run
-```
-python3 ~/.config/usage-tracker/usage-tracker.py
-```
-or  
-
 Launch the widget on a specific monitor by connector name:
 ```
 LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR=HDMI-A-2 python3 ~/.config/usage-tracker/usage-widget.py
