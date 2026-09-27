@@ -119,7 +119,7 @@ systemctl --user start usage-tracker.service
 ```
 hyprctl monitors
 ```
->Monitor DP-1 (ID 0) Monitor HDMI-A-1 (ID 1)
+>Monitor DP-2 (ID 0) Monitor HDMI-A-2 (ID 1)
 
 ## 🎉 Run
 ```
@@ -129,7 +129,7 @@ or
 
 Launch the widget on a specific monitor by connector name:
 ```
-LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR=DP-1 python3 ~/.config/usage-tracker/usage-widget.py
+LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR=HDMI-A-2 python3 ~/.config/usage-tracker/usage-widget.py
 ```
 The code should run on whichever screen the terminal is currently running on:
 ```
