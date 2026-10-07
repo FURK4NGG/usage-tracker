@@ -184,3 +184,6 @@ git clone https://github.com/FURK4NGG/usage-tracker.git
 cd usage-tracker  
 chmod +x install.sh  
 ./install.sh  
+
+## 🔒 License  
+<h1 align="center">📜 GPL-3.0 License</h1>
