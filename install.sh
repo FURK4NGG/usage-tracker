@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$HOME/.config/usage-tracker"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
-PYTHON="$(command -v python3 || true)"
 
 log() {
     echo "[usage-tracker] $1"
@@ -18,6 +17,60 @@ error() {
     echo "[usage-tracker] ERROR: $1"
     exit 1
 }
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+install_packages() {
+    local pm=""
+
+    if command_exists pacman; then
+        pm="pacman"
+    elif command_exists apt-get; then
+        pm="apt"
+    elif command_exists dnf; then
+        pm="dnf"
+    else
+        return 1
+    fi
+
+    log "Installing GTK 4, gtk4-layer-shell, PyGObject, and jq dependencies using ${pm}..."
+
+    case "$pm" in
+        pacman)
+            sudo pacman -S --needed --noconfirm \
+                python-gobject \
+                gtk4 \
+                gtk4-layer-shell \
+                jq
+            ;;
+
+        apt)
+            sudo apt-get update
+            sudo apt-get install -y \
+                python3-gi \
+                gir1.2-gtk-4.0 \
+                gir1.2-gtk4layershell-1.0 \
+                jq
+            ;;
+
+        dnf)
+            sudo dnf install -y \
+                python3-gobject \
+                gtk4 \
+                gtk4-layer-shell \
+                jq
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Install required packages
+# ---------------------------------------------------------------------------
+
+install_packages || error "Desteklenmeyen paket yöneticisi. GTK 4, gtk4-layer-shell, PyGObject ve jq paketlerini elle kurun."
+PYTHON="$(command -v python3 || true)"
 
 # ---------------------------------------------------------------------------
 # Basic tool checks
