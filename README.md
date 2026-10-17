@@ -93,7 +93,7 @@ systemctl --user daemon-reload
 systemctl --user enable --now usage-tracker.service  
 ```
 
-▶️ AUTOMATIC STARTER  
+▶️ AUTOMATIC STARTER IN EVERY SESSION  
 ```
 systemctl --user enable --now usage-tracker.service
 ```
@@ -103,8 +103,8 @@ Control:systemctl --user is-enabled usage-tracker.service
 Control:systemctl --user status usage-tracker.service  
 >active (running)  
 
-<br><br>
-## Follow the tracker's logs in real time:  
+<br><br><br>
+Follow the tracker's logs in real time:  
 ```
 journalctl --user -u usage-tracker.service -f
 ```
