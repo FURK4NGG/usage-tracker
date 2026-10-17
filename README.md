@@ -69,15 +69,15 @@ chmod +x ~/.config/usage-tracker/install.sh
 
 Arch
 ```
-sudo pacman -S python-gobject gtk4 gtk4-layer-shell jq
+sudo pacman -S python-gobject gtk4 gtk4-layer-shell jq libnotify
 ```
 Debian / Ubuntu
 ```
-sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-gtk4layershell-1.0 jq
+sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-gtk4layershell-1.0 jq libnotify-bin
 ```
 Fedora
 ```
-sudo dnf install python3-gobject gtk4 gtk4-layer-shell jq
+sudo dnf install python3-gobject gtk4 gtk4-layer-shell jq libnotify
 ```
 <br><br>
 
