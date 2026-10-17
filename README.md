@@ -38,8 +38,8 @@ Directory Structure
 ~/.config/usage-tracker/  
 ├── install.sh  
 ├── usage-tracker.py  
-├── usage-widget.py  
 ├── usage-tracker.service  
+├── usage-widget.py  
 ├── habit-timers.json (This file is auto-generated)  
 ├── usage-widget.lock (This file is auto-generated)  
 ├── usage-widget-language.json (This file is auto-generated)  
