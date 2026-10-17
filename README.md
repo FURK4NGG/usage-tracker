@@ -7,13 +7,12 @@ A lightweight application usage tracker for Linux that monitors active applicati
 
 <br><br>
 
-✅ Works On
+✅ Works On  
+- Linux distributions: Arch Linux, Debian, Fedora  
+- Wayland compositors: Hyprland, Sway, and other wlroots-based compositors  
 
-    Linux distributions: Arch Linux, Debian, Fedora
-    Wayland compositors: Hyprland, Sway, and other wlroots-based compositors
-
-⚠️ Compatibility
-Other Wayland compositors and desktop environments have not been verified yet. 
+⚠️ Compatibility  
+Other Wayland compositors and desktop environments have not been verified yet.
 <br><br>
 
 ## 🚀 Features
