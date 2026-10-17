@@ -75,10 +75,213 @@ sudo pacman -S python-gobject gtk4 gtk4-layer-shell jq libnotify
 ```
 <br>
 
-Debian / Ubuntu
+<details>
+<summary>Debian / Ubuntu</summary>
 ```
 sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-gtk4layershell-1.0 jq libnotify-bin
+
+
+# Installation on Debian 12 (Bookworm)
+
+This guide explains how to install and run **Usage Tracker** on Debian 12, including Raspberry Pi OS Bookworm on ARM64.
+
+## 1. Install system dependencies
+
+Update the package lists and install the required build tools and libraries:
+
+```bash
+sudo apt update
+sudo apt install -y \
+  git build-essential meson ninja-build pkg-config \
+  libgtk-4-dev libwayland-dev wayland-protocols \
+  gobject-introspection libgirepository1.0-dev \
+  python3-gi valac jq libnotify-bin
 ```
+
+## 2. Build and install GTK4 Layer Shell
+
+Debian 12 does not provide the required `Gtk4LayerShell` introspection package through its default APT repositories. Build `gtk4-layer-shell` from source instead.
+
+Clone the version used for this installation:
+
+```bash
+cd ~
+git clone --branch v1.0.4 https://github.com/wmww/gtk4-layer-shell.git
+cd gtk4-layer-shell
+```
+
+Configure the build:
+
+```bash
+meson setup build \
+  --prefix=/usr \
+  -Dexamples=false \
+  -Ddocs=false \
+  -Dtests=false \
+  -Dsmoke-tests=false \
+  -Dvapi=false
+```
+
+Compile and install:
+
+```bash
+ninja -C build
+sudo ninja -C build install
+sudo ldconfig
+```
+
+The `valac` package is required by the build configuration. The `-Dvapi=false` option disables Vala API generation while preserving GObject Introspection support required by Python.
+
+## 3. Verify GTK4 Layer Shell
+
+Run the following command:
+
+```bash
+python3 -c "import gi; gi.require_version('Gtk4LayerShell', '1.0'); from gi.repository import Gtk4LayerShell; print('Gtk4LayerShell OK')"
+```
+
+Expected output:
+
+```text
+Gtk4LayerShell OK
+```
+
+You can also verify GTK4 and GTK4 Layer Shell together:
+
+```bash
+python3 -c "import gi; gi.require_version('Gtk', '4.0'); gi.require_version('Gtk4LayerShell', '1.0'); from gi.repository import Gtk, Gtk4LayerShell; print('GTK4 and Gtk4LayerShell OK')"
+```
+
+Expected output:
+
+```text
+GTK4 and Gtk4LayerShell OK
+```
+
+## 4. Install Usage Tracker
+
+Clone the Usage Tracker repository if you have not already downloaded it:
+
+```bash
+cd ~
+git clone https://github.com/FURK4NGG/usage-tracker.git
+cd usage-tracker
+```
+
+If the repository is already present, simply enter its directory:
+
+```bash
+cd ~/usage-tracker
+```
+
+Make the installer executable and run it:
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+The installer checks the dependencies, validates the Python files, copies the application files into the configuration directory, and installs the systemd user service.
+
+Installed files:
+
+- Application directory: `~/.config/usage-tracker/`
+- Background tracker: `~/.config/usage-tracker/usage-tracker.py`
+- Widget: `~/.config/usage-tracker/usage-widget.py`
+- Usage data: `~/.config/usage-tracker/usage-data.json`
+- systemd service: `~/.config/systemd/user/usage-tracker.service`
+
+## 5. Enable and start the background service
+
+Reload systemd and enable the service:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now usage-tracker.service
+```
+
+Check the service status:
+
+```bash
+systemctl --user status usage-tracker.service
+```
+
+The service should show:
+
+```text
+Active: active (running)
+```
+
+View recent logs:
+
+```bash
+journalctl --user -u usage-tracker.service -n 50 --no-pager
+```
+
+Follow live logs:
+
+```bash
+journalctl --user -u usage-tracker.service -f
+```
+
+The background service tracks application usage and handles configured usage-limit and habit reminders.
+
+## 6. Launch the widget
+
+The widget is launched separately from the background service.
+
+Run it manually:
+
+```bash
+/usr/bin/python3 ~/.config/usage-tracker/usage-widget.py
+```
+
+To open it using a keyboard shortcut, configure the appropriate shortcut in your desktop compositor.
+
+For example, in Hyprland:
+
+```ini
+bind = SUPER, U, exec, /usr/bin/python3 /home/USER/.config/usage-tracker/usage-widget.py
+```
+
+Replace `USER` with your Linux username.
+
+## 7. Compositor compatibility
+
+The installer checks whether it can identify a supported compositor. It may display a warning such as:
+
+```text
+WARNING: Could not detect a supported compositor.
+```
+
+This warning does not necessarily prevent the background service from running. However, correct application tracking and widget positioning depend on the compositor and its supported interfaces.
+
+The installation described here was completed on Raspberry Pi OS / Debian 12 Bookworm with ARM64 architecture. The service started successfully and the GTK4 Layer Shell Python import test passed.
+
+## 8. Useful commands
+
+| Task | Command |
+|---|---|
+| Start service | `systemctl --user start usage-tracker.service` |
+| Stop service | `systemctl --user stop usage-tracker.service` |
+| Restart service | `systemctl --user restart usage-tracker.service` |
+| Check status | `systemctl --user status usage-tracker.service` |
+| View logs | `journalctl --user -u usage-tracker.service -f` |
+| Launch widget | `/usr/bin/python3 ~/.config/usage-tracker/usage-widget.py` |
+
+## Notes
+
+- Do not add Debian 13 repositories to Debian 12 just to obtain `gir1.2-gtk4layershell-1.0`.
+- The `gtk4-layer-shell` library is installed system-wide under `/usr`.
+- The Usage Tracker application files and service configuration are installed under the current user's home directory.
+- Enabling the user service starts it immediately and enables it for subsequent user sessions.
+- The widget is separate from the background service and must be launched manually or through a desktop shortcut.
+
+   
+```
+</details>
+
+
 <br>
 
 Fedora
