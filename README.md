@@ -52,8 +52,7 @@ Directory Structure
 git clone https://github.com/FURK4NGG/usage-tracker.git
 cd usage-tracker
 mkdir -p ~/.config/usage-tracker
-cp usage-data.json \
-   usage-tracker.py \
+cp usage-tracker.py \
    usage-tracker.service \
    usage-widget.py \
    install.sh \
