@@ -7,12 +7,13 @@ A lightweight application usage tracker for Linux that monitors active applicati
 
 <br><br>
 
-✅ Works On  
-wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc)  
+✅ Works On
 
-❌ Not Supported  
-GNOME (Wayland), KDE Plasma (Wayland) — neither exposes the toplevel-list
-protocol this tool relies on to see which window is focused
+    Linux distributions: Arch Linux, Debian, Fedora
+    Wayland compositors: Hyprland, Sway, and other wlroots-based compositors
+
+⚠️ Compatibility
+Other Wayland compositors and desktop environments have not been verified yet. 
 <br><br>
 
 ## 🚀 Features
