@@ -20,6 +20,7 @@ protocol this tool relies on to see which window is focused
 - [x] Measures active application usage time  
 - [x] Categorizes applications automatically  
 - [x] Generates hourly usage breakdowns  
+- [x] Adds customizable reminders for drinking water, coffee breaks, and exercise with automatic notifications  
 - [x] Records daily usage history (last 30 days)  
 - [x] Stores everything locally in usage-data.json  
 - [x] Runs in the background as a systemd --user service  
