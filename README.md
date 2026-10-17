@@ -141,7 +141,7 @@ The code should run on whichever screen the terminal is currently running on:
 ```
 MONITOR=$(hyprctl -j activeworkspace | python3 -c 'import sys,json; print(json.load(sys.stdin)["monitor"])'); LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so.0 USAGE_TRACKER_MONITOR="$MONITOR" python3 ~/.config/usage-tracker/usage-widget.py
 ```
-
+<br><br>
 
 ## ❓ HOW IT WORKS ❓
 
