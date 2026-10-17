@@ -89,7 +89,7 @@ systemctl --user enable --now usage-tracker.service
 
 ▶️ AUTOMATIC STARTER  
 ```
-systemctl --user enable usage-tracker.service
+systemctl --user enable --now usage-tracker.service
 ```
 Control:systemctl --user is-enabled usage-tracker.service
 >enabled
