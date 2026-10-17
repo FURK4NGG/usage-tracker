@@ -77,9 +77,10 @@ sudo pacman -S python-gobject gtk4 gtk4-layer-shell jq libnotify
 
 <details>
 <summary>Debian / Ubuntu</summary>
+   
 ```
 sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-gtk4layershell-1.0 jq libnotify-bin
-
+```
 
 # Installation on Debian 12 (Bookworm)
 
@@ -277,8 +278,6 @@ The installation described here was completed on Raspberry Pi OS / Debian 12 Boo
 - Enabling the user service starts it immediately and enables it for subsequent user sessions.
 - The widget is separate from the background service and must be launched manually or through a desktop shortcut.
 
-   
-```
 </details>
 
 
