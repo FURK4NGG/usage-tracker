@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$HOME/.config/usage-tracker"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
+PYTHON="$(command -v python3 || true)"
 
 log() {
     echo "[usage-tracker] $1"
@@ -18,68 +19,14 @@ error() {
     exit 1
 }
 
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-install_packages() {
-    local pm=""
-
-    if command_exists pacman; then
-        pm="pacman"
-    elif command_exists apt-get; then
-        pm="apt"
-    elif command_exists dnf; then
-        pm="dnf"
-    else
-        return 1
-    fi
-
-    log "Installing GTK 4, gtk4-layer-shell, PyGObject, and jq dependencies using ${pm}..."
-
-    case "$pm" in
-        pacman)
-            sudo pacman -S --needed --noconfirm \
-                python-gobject \
-                gtk4 \
-                gtk4-layer-shell \
-                jq
-            ;;
-
-        apt)
-            sudo apt-get update
-            sudo apt-get install -y \
-                python3-gi \
-                gir1.2-gtk-4.0 \
-                gir1.2-gtk4layershell-1.0 \
-                jq
-            ;;
-
-        dnf)
-            sudo dnf install -y \
-                python3-gobject \
-                gtk4 \
-                gtk4-layer-shell \
-                jq
-            ;;
-    esac
-}
-
-# ---------------------------------------------------------------------------
-# Install required packages
-# ---------------------------------------------------------------------------
-
-install_packages || error "Unsupported package manager. Please install GTK 4, gtk4-layer-shell, PyGObject, and jq manually."
-PYTHON="$(command -v python3 || true)"
-
 # ---------------------------------------------------------------------------
 # Basic tool checks
 # ---------------------------------------------------------------------------
 
-[[ -n "$PYTHON" ]] || error "python3 was not found."
+[[ -n "$PYTHON" ]] || error "python3 bulunamadı"
 
 command -v systemctl >/dev/null 2>&1 \
-    || error "systemctl was not found (this tool requires systemd --user services)."
+    || error "systemctl bulunamadı (bu araç systemd --user servisleri kullanır)"
 
 for file in usage-tracker.py usage-widget.py usage-tracker.service; do
     [[ -f "$SCRIPT_DIR/$file" ]] || error "Eksik dosya: $SCRIPT_DIR/$file"
@@ -105,7 +52,7 @@ except Exception as exc:
     sys.exit(1)
 " 2>/tmp/usage-tracker-gtk-check.log; then
     cat /tmp/usage-tracker-gtk-check.log >&2
-    error "PyGObject / GTK 4.0 was not found. Arch: sudo pacman -S python-gobject gtk4 | Debian/Ubuntu: sudo apt install python3-gi gir1.2-gtk-4.0 | Fedora: sudo dnf install python3-gobject gtk4"
+    error "PyGObject / GTK 4.0 bulunamadı. Arch: sudo pacman -S python-gobject gtk4 | Debian/Ubuntu: sudo apt install python3-gi gir1.2-gtk-4.0 | Fedora: sudo dnf install python3-gobject gtk4"
 fi
 
 if ! "$PYTHON" -c "
@@ -119,15 +66,15 @@ except Exception as exc:
     sys.exit(1)
 " 2>/tmp/usage-tracker-layershell-check.log; then
     cat /tmp/usage-tracker-layershell-check.log >&2
-    error "gtk4-layer-shell was not found. Arch: sudo pacman -S gtk4-layer-shell | Debian/Ubuntu (recent versions): sudo apt install gir1.2-gtk4layershell-1.0 | Fedora: sudo dnf install gtk4-layer-shell"
+    error "gtk4-layer-shell bulunamadı. Arch: sudo pacman -S gtk4-layer-shell | Debian/Ubuntu (yeni sürümler): sudo apt install gir1.2-gtk4layershell-1.0 | Fedora: sudo dnf install gtk4-layer-shell"
 fi
 
 rm -f /tmp/usage-tracker-gtk-check.log /tmp/usage-tracker-layershell-check.log
 
 if ! command -v notify-send >/dev/null 2>&1; then
-    warn "'notify-send' was not found. Usage-limit notifications will not be available."
+    warn "'notify-send' bulunamadı. Uygulama kullanım limiti bildirimleri gösterilemeyecek."
     warn "Arch: sudo pacman -S libnotify | Debian/Ubuntu: sudo apt install libnotify-bin | Fedora: sudo dnf install libnotify"
-    warn "A notification daemon (such as mako, dunst, or swaync) must also be running."
+    warn "Ayrıca bir bildirim sunucusu (mako, dunst, swaync vb.) çalışıyor olmalı."
 fi
 
 # ---------------------------------------------------------------------------
@@ -149,23 +96,23 @@ fi
 
 case "$COMPOSITOR_STATUS" in
     hyprland)
-        log "Compositor: Hyprland (full support)"
+        log "Compositor: Hyprland (tam destek)"
         ;;
     sway)
-        log "Compositor: Sway (full support)"
+        log "Compositor: Sway (tam destek)"
         ;;
     wlr-generic)
-        log "Compositor: wlroots-based (e.g. River/Wayfire/Hikari/Labwc) - support detected through lswt"
+        log "Compositor: wlroots tabanlı (River/Wayfire/Hikari/Labwc vb.) - lswt üzerinden destekleniyor"
         ;;
     unsupported)
         warn "GNOME veya KDE Plasma (Wayland) tespit edildi."
-        warn "These desktops do not expose the Wayland protocol required to track the active window."
-        warn "Installation will continue, but the tracker will not be able to identify the focused application."
+        warn "Bu masaüstleri aktif pencereyi izlemek için gereken Wayland protokolünü dışa açmıyor."
+        warn "Kurulum devam edecek, ancak izleyici hangi uygulamanın odakta olduğunu göremeyecek."
         ;;
     *)
-        warn "Compositor not detected. Outside Hyprland, Sway, or a wlroots compositor with lswt installed,"
-        warn "the tracker may not work outside Hyprland, Sway, or a wlroots compositor (River/Wayfire/Hikari/Labwc)."
-        warn "If you use a wlroots-based compositor, try installing the 'lswt' package."
+        warn "Compositor tespit edilemedi. Hyprland, Sway veya lswt kurulu bir wlroots"
+        warn "compositor'ı (River/Wayfire/Hikari/Labwc) dışında bir ortamda izleyici çalışmayabilir."
+        warn "wlroots tabanlı bir compositor kullanıyorsan 'lswt' paketini kurmayı dene."
         ;;
 esac
 
@@ -217,10 +164,10 @@ echo
 echo "Project:"
 echo "  $BASE_DIR"
 echo
-echo "Tracker (background service):"
+echo "Tracker (arka planda çalışan servis):"
 echo "  $BASE_DIR/usage-tracker.py"
 echo
-echo "Widget (launched manually with a shortcut; not a service):"
+echo "Widget (bir kısayolla manuel açılır, servis değildir):"
 echo "  $PYTHON $BASE_DIR/usage-widget.py"
 echo
 echo "Data:"
@@ -229,15 +176,15 @@ echo
 echo "Service:"
 echo "  $SYSTEMD_DIR/usage-tracker.service"
 echo
-echo "Commands:"
+echo "Kontrol:"
 echo "  systemctl --user status usage-tracker.service"
 echo "  journalctl --user -u usage-tracker.service -f"
 echo
-echo "To open the widget, add a shortcut to your compositor configuration, e.g. Hyprland (hyprland.conf):"
+echo "Widget'ı açmak için compositor ayarlarına bir kısayol ekle, örn. Hyprland (hyprland.conf):"
 echo "  bind = SUPER, U, exec, $PYTHON $BASE_DIR/usage-widget.py"
 echo
 if [[ "$COMPOSITOR_STATUS" == "unsupported" ]]; then
-    echo "NOTE: Active-window tracking is not supported on this desktop (GNOME/KDE Wayland)."
-    echo "The service will run, but it will not collect usage data."
+    echo "NOT: Mevcut masaüstünde (GNOME/KDE Wayland) aktif pencere izleme desteklenmiyor,"
+    echo "servis çalışacak ama kullanım verisi biriktirmeyecektir."
     echo
 fi

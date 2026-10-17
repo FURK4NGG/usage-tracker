@@ -1,5 +1,5 @@
 [Unit]
-Description=Application Usage Tracker
+Description=Application Usage Tracker and Habit Reminders
 After=graphical-session.target
 
 [Service]
@@ -7,6 +7,8 @@ Type=simple
 ExecStart=__PYTHON__ __BASE_DIR__/usage-tracker.py
 WorkingDirectory=__BASE_DIR__
 Environment=PYTHONUNBUFFERED=1
+Environment=XDG_RUNTIME_DIR=%t
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus
 Restart=always
 RestartSec=3
 

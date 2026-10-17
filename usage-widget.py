@@ -36,6 +36,7 @@ DATA_FILE = os.path.join(BASE_DIR, "usage-data.json")
 LOCK_FILE = os.path.join(BASE_DIR, "usage-widget.lock")
 LANGUAGE_FILE = os.path.join(BASE_DIR, "usage-widget-language.json")
 LIMITS_FILE = os.path.join(BASE_DIR, "usage-limits.json")
+HABITS_FILE = os.path.join(BASE_DIR, "habit-timers.json")
 _lock_handle = None
 
 DEFAULT_LANGUAGE = "en"
@@ -73,6 +74,18 @@ TRANSLATIONS = {
         "cancel": "Cancel",
         "save": "Save",
         "limit_reached": "usage limit reached",
+        "water": "Water",
+        "coffee": "Coffee",
+        "exercise": "Exercise",
+        "remaining": "Remaining",
+        "set_reminder": "Set reminder",
+        "hours": "Hours",
+        "minutes": "Minutes",
+        "seconds": "Seconds",
+        "remove_timer": "Remove timer",
+        "drink_water": "Drink water",
+        "coffee_time": "Coffee time",
+        "short_break": "Take a short break",
     },
     "tr": {
         "title": "Uygulama Kullanımı",
@@ -105,6 +118,18 @@ TRANSLATIONS = {
         "cancel": "Vazgeç",
         "save": "Kaydet",
         "limit_reached": "kullanım limiti doldu",
+        "water": "Su",
+        "coffee": "Kahve",
+        "exercise": "Egzersiz",
+        "remaining": "Kalan",
+        "set_reminder": "Hatırlatıcı ayarla",
+        "hours": "Saat",
+        "minutes": "Dakika",
+        "seconds": "Saniye",
+        "remove_timer": "Sayacı kaldır",
+        "drink_water": "Su iç",
+        "coffee_time": "Kahve zamanı",
+        "short_break": "Kısa bir mola ver",
     },
 }
 
@@ -345,6 +370,7 @@ class UsageWindow(Gtk.Window):
 
         self.selected_date = date.today()
         self._limit_target = None
+        self._habit_target = None
         self.language = load_language()
 
         self.bind_monitor()
@@ -356,7 +382,9 @@ class UsageWindow(Gtk.Window):
 
     def on_key_pressed(self, controller, keyval, keycode, state):
         if keyval == Gdk.KEY_Escape:
-            if self._limit_target:
+            if self._habit_target:
+                self.cancel_habit()
+            elif self._limit_target:
                 self._cancel_limit()
             else:
                 self.get_application().quit()
@@ -512,6 +540,11 @@ class UsageWindow(Gtk.Window):
         }
         .app-button:hover { background: rgba(255,255,255,0.06); }
         .limit-title { color: white; font-size: 15px; font-weight: 700; }
+        .habit-row { margin-bottom: 4px; }
+        .habit-button { background: rgba(255,255,255,0.07); color: white; border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 8px 12px; min-height: 35px; min-width: 92px; }
+        .habit-button:hover { background: rgba(255,255,255,0.14); }
+        .habit-name { color: white; font-weight: 700; font-size: 14px; }
+        .habit-remaining { color: #ff9f43; font-weight: 700; font-size: 12px; }
         """
         provider = Gtk.CssProvider()
         provider.load_from_data(css.encode())
@@ -724,6 +757,146 @@ class UsageWindow(Gtk.Window):
         self._limit_target = None
         self.refresh()
 
+
+    def load_habits(self):
+        try:
+            with open(HABITS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    def save_habits(self, data):
+        os.makedirs(BASE_DIR, exist_ok=True)
+        tmp = HABITS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, HABITS_FILE)
+
+    def format_remaining(self, seconds):
+        seconds = max(0, int(seconds))
+        hours, rem = divmod(seconds, 3600)
+        minutes = rem // 60
+        tr = TRANSLATIONS[self.language]
+        if self.language == "tr":
+            if hours and minutes:
+                return f'{tr["remaining"]}: {hours} saat {minutes} dk'
+            if hours:
+                return f'{tr["remaining"]}: {hours} saat'
+            return f'{tr["remaining"]}: {minutes} dk'
+        if hours and minutes:
+            return f'{tr["remaining"]}: {hours}h {minutes}m'
+        if hours:
+            return f'{tr["remaining"]}: {hours}h'
+        return f'{tr["remaining"]}: {minutes}m'
+
+    def render_habit_row(self):
+        tr = TRANSLATIONS[self.language]
+        data = self.load_habits()
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        row.set_halign(Gtk.Align.CENTER)
+        row.add_css_class("habit-row")
+        for key, emoji in (("water", "💧"), ("coffee", "☕"), ("exercise", "🏃")):
+            col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            col.set_halign(Gtk.Align.CENTER)
+            col.set_valign(Gtk.Align.CENTER)
+            name = Gtk.Label(label=f'{emoji}  {tr[key]}')
+            name.add_css_class("habit-name")
+            col.append(name)
+            item = data.get(key, {})
+            due = float(item.get("due_at", 0) or 0)
+            interval = int(item.get("interval_seconds", 0) or 0)
+            if due > 0 and interval > 0:
+                remaining = max(0, due - datetime.now().timestamp())
+                label = Gtk.Label(label=self.format_remaining(remaining))
+                label.add_css_class("habit-remaining")
+                col.append(label)
+            button = Gtk.Button()
+            button.add_css_class("habit-button")
+            button.set_valign(Gtk.Align.CENTER)
+            button.set_size_request(96, 35)
+            button.set_child(col)
+            button.connect("clicked", lambda _b, k=key: self.open_habit_panel(k))
+            row.append(button)
+        self.card.append(row)
+
+    def open_habit_panel(self, key):
+        self._habit_target = key
+        self._limit_target = None
+        self.refresh()
+
+    def render_habit_panel(self, key):
+        tr = TRANSLATIONS[self.language]
+        names = {"water": tr["water"], "coffee": tr["coffee"], "exercise": tr["exercise"]}
+        emojis = {"water": "💧", "coffee": "☕", "exercise": "🏃"}
+        data = self.load_habits()
+        current = data.get(key, {})
+        interval = int(current.get("interval_seconds", 0) or 0)
+        hours, rem = divmod(interval, 3600)
+        minutes, seconds = divmod(rem, 60)
+
+        title = Gtk.Label(label=f'{emojis[key]}  {names[key]}')
+        title.add_css_class("title")
+        title.set_halign(Gtk.Align.CENTER)
+        self.card.append(title)
+
+        subtitle = Gtk.Label(label=tr["set_reminder"])
+        subtitle.add_css_class("muted")
+        self.card.append(subtitle)
+
+        spin_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        spin_row.set_halign(Gtk.Align.CENTER)
+        spin_row.set_margin_top(12)
+        spin_row.set_margin_bottom(12)
+        self.habit_h_spin = Gtk.SpinButton.new_with_range(0, 23, 1)
+        self.habit_h_spin.set_value(hours)
+        self.habit_m_spin = Gtk.SpinButton.new_with_range(0, 59, 1)
+        self.habit_m_spin.set_value(minutes)
+        self.habit_s_spin = Gtk.SpinButton.new_with_range(0, 59, 1)
+        self.habit_s_spin.set_value(seconds)
+        for spin, unit in ((self.habit_h_spin, tr["hours"]), (self.habit_m_spin, tr["minutes"]), (self.habit_s_spin, tr["seconds"])):
+            col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            col.append(spin)
+            label = Gtk.Label(label=unit)
+            label.add_css_class("muted")
+            col.append(label)
+            spin_row.append(col)
+        self.card.append(spin_row)
+
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        buttons.set_halign(Gtk.Align.CENTER)
+        remove_btn = Gtk.Button(label=tr["remove_timer"])
+        remove_btn.connect("clicked", lambda *_: self.finish_habit(key, 0))
+        buttons.append(remove_btn)
+        cancel_btn = Gtk.Button(label=tr["cancel"])
+        cancel_btn.connect("clicked", lambda *_: self.cancel_habit())
+        buttons.append(cancel_btn)
+        save_btn = Gtk.Button(label=tr["save"])
+        save_btn.add_css_class("suggested-action")
+        save_btn.connect("clicked", lambda *_: self.finish_habit(
+            key, int(self.habit_h_spin.get_value()) * 3600 + int(self.habit_m_spin.get_value()) * 60 + int(self.habit_s_spin.get_value())
+        ))
+        buttons.append(save_btn)
+        self.card.append(buttons)
+
+    def finish_habit(self, key, seconds):
+        data = self.load_habits()
+        if seconds > 0:
+            data[key] = {
+                "interval_seconds": seconds,
+                "due_at": datetime.now().timestamp() + seconds,
+                "notified": False
+            }
+        else:
+            data.pop(key, None)
+        self.save_habits(data)
+        self._habit_target = None
+        self.refresh()
+
+    def cancel_habit(self):
+        self._habit_target = None
+        self.refresh()
+
     def add_label(self, text, css, xalign=0.0):
         label = Gtk.Label(label=text)
         label.add_css_class(css)
@@ -753,6 +926,11 @@ class UsageWindow(Gtk.Window):
 
         self.update_language_menu()
 
+        if getattr(self, "_habit_target", None):
+            self.render_habit_panel(self._habit_target)
+            return True
+
+        self.render_habit_row()
         if getattr(self, "_limit_target", None):
             app_id, display_name = self._limit_target
             self.render_limit_panel(app_id, display_name)

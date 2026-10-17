@@ -13,6 +13,7 @@ BASE_DIR = os.path.expanduser("~/.config/usage-tracker")
 DATA_FILE = os.path.join(BASE_DIR, "usage-data.json")
 LANGUAGE_FILE = os.path.join(BASE_DIR, "usage-widget-language.json")
 LIMITS_FILE = os.path.join(BASE_DIR, "usage-limits.json")
+HABITS_FILE = os.path.join(BASE_DIR, "habit-timers.json")
 POLL_INTERVAL = 1.0
 MAX_DAYS = 30
 MAX_SEGMENT = 5.0
@@ -24,6 +25,18 @@ NOTIFY_TITLE = {
 NOTIFY_TEXT = {
     "en": "{app} usage limit reached",
     "tr": "{app} kullanım limiti doldu",
+}
+HABIT_NOTIFICATIONS = {
+    "en": {
+        "water": ("Usage Tracker", "Drink water"),
+        "coffee": ("Usage Tracker", "Coffee time"),
+        "exercise": ("Usage Tracker", "Take a short break"),
+    },
+    "tr": {
+        "water": ("Kullanım Takipçisi", "Su iç"),
+        "coffee": ("Kullanım Takipçisi", "Kahve zamanı"),
+        "exercise": ("Kullanım Takipçisi", "Kısa bir mola ver"),
+    },
 }
 
 CATEGORY_MAP = {
@@ -294,6 +307,73 @@ def notify_limit_reached(app):
         flush=True,
     )
     return True
+
+
+def load_habits():
+    try:
+        with open(HABITS_FILE, "r", encoding="utf-8") as f:
+            value = json.load(f)
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+
+
+def save_habits(habits):
+    tmp = HABITS_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(habits, f, ensure_ascii=False, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, HABITS_FILE)
+
+
+def check_habit_timers():
+    """Send bilingual recurring reminders configured from the widget."""
+    habits = load_habits()
+    if not habits:
+        return
+    now = time.time()
+    lang = current_language()
+    messages = HABIT_NOTIFICATIONS.get(lang, HABIT_NOTIFICATIONS["en"])
+    notify_send = shutil.which("notify-send")
+    changed = False
+    if not notify_send:
+        print("[usage-tracker] notify-send not found; habit reminders cannot be displayed", flush=True)
+
+    for key, item in habits.items():
+        try:
+            interval = int(item.get("interval_seconds", 0) or 0)
+            due_at = float(item.get("due_at", 0) or 0)
+        except (TypeError, ValueError, AttributeError):
+            continue
+        if interval <= 0 or due_at <= 0 or now < due_at:
+            continue
+        if notify_send:
+            title, message = messages.get(key, messages["water"])
+            try:
+                notify_env = os.environ.copy()
+                runtime_dir = notify_env.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+                notify_env.setdefault("DBUS_SESSION_BUS_ADDRESS", f"unix:path={runtime_dir}/bus")
+                result = subprocess.run(
+                    [notify_send, "--app-name=Usage Tracker",
+                     "--urgency=normal", title, message],
+                    capture_output=True, text=True, timeout=5,
+                    env=notify_env
+                )
+                if result.returncode != 0:
+                    print(f"[usage-tracker] habit notification failed: {(result.stderr or result.stdout).strip()}", flush=True)
+                else:
+                    print(f"[usage-tracker] habit reminder sent: {key}", flush=True)
+            except Exception as exc:
+                print(f"[usage-tracker] habit notification failed: {exc}", flush=True)
+        # Schedule the next reminder from now, avoiding notification bursts
+        # if the service was suspended or the computer was asleep.
+        item["due_at"] = now + interval
+        item["notified"] = False
+        changed = True
+
+    if changed:
+        save_habits(habits)
 
 
 def check_limit(data, app):
@@ -577,6 +657,7 @@ def main():
                 save_data(data)
                 last_save = now
 
+        check_habit_timers()
         last_time = now
 
         if now - last_save >= 1:
