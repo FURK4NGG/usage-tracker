@@ -104,6 +104,7 @@ journalctl --user -u usage-tracker.service -f
 Controlling the Service
 Restart it:
 ```
+systemctl --user daemon-reload
 systemctl --user restart usage-tracker.service
 ```
 Stop it:
