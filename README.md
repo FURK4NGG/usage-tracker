@@ -3,7 +3,7 @@
 A lightweight application usage tracker for Linux that monitors active application usage and displays daily usage statistics through a GTK4-based widget.  
 <br><br>
 
-![usage-tracker Demo Video](https://github.com/FURK4NGG/usage-tracker/blob/main/%7B%7D/usage-tracker.gif)
+![usage-tracker Demo GIF](https://github.com/FURK4NGG/usage-tracker/blob/main/%7B%7D/usage-tracker.gif)
 
 <br><br>
 
